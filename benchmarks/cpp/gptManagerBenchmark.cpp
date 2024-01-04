@@ -191,7 +191,7 @@ struct BenchInfo
 class Recorder
 {
 public:
-    Recorder() {}
+    Recorder(int promptNum) : mTotalPromptsNum(promptNum), mFinishedSampleNum(0) {}
 
     void initialize()
     {
@@ -221,6 +221,8 @@ public:
         mRequestBenchInfos[requestId].latency = std::chrono::duration<float, std::milli>(
             mRequestBenchInfos[requestId].end - mRequestBenchInfos[requestId].start)
                                                     .count();
+        ++mFinishedSampleNum;
+        printf("Finshed samples %d / %d ........\n", mFinishedSampleNum, mTotalPromptsNum);
     }
 
     void calculateMetrics()
@@ -257,6 +259,8 @@ private:
 
     std::chrono::time_point<std::chrono::steady_clock> mStart;
     std::chrono::time_point<std::chrono::steady_clock> mEnd;
+    int mTotalPromptsNum;
+    int mFinishedSampleNum;
     int mNumSamples;
     float mTotalLatency;
     float mSeqThroughput;
@@ -513,7 +517,7 @@ void benchmarkGptManager([[maybe_unused]] std::string const& modelName, std::fil
     const auto numSamples = dataset.first.size();
 
     const int maxBeamWidth = beamWidth;
-    auto recorder = std::make_shared<Recorder>();
+    auto recorder = std::make_shared<Recorder>(numSamples);
     uint64_t terminateReqId = numSamples + 1;
     auto gptServer = std::make_shared<GptServer>(
         engineDir, modelType, maxBeamWidth, schedulerPolicy, optionalParams, recorder, terminateReqId);
@@ -538,6 +542,7 @@ void benchmarkGptManager([[maybe_unused]] std::string const& modelName, std::fil
         gptServer->waitForEmpty();
 
         // Benchmark
+        printf("Start benchmark..............\n");
         recorder->initialize();
         for (std::size_t i = 0; i < numSamples; ++i)
         {
