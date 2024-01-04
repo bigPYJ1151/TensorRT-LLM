@@ -230,13 +230,16 @@ public:
         mSeqThroughput = mNumSamples / (mTotalLatency / 1000);
         mAvgSeqLatency = 0;
         int totalOutputTokens = 0;
+        int totalTokens = 0;
         for (auto reqInfo : mRequestBenchInfos)
         {
             mAvgSeqLatency += reqInfo.second.latency;
             totalOutputTokens += reqInfo.second.outputLength;
+            totalTokens += reqInfo.second.outputLength + reqInfo.second.inputLength;
         }
         mAvgSeqLatency /= mNumSamples;
-        mTokenThroughput = totalOutputTokens / (mTotalLatency / 1000);
+        mOutputTokenThroughput = totalOutputTokens / (mTotalLatency / 1000);
+        mTokenThroughput = totalTokens / (mTotalLatency / 1000);
     }
 
     void report()
@@ -245,6 +248,7 @@ public:
         printf("[BENCHMARK] total_latency(ms) %.2f\n", mTotalLatency);
         printf("[BENCHMARK] seq_throughput(seq/sec) %.2f\n", mSeqThroughput);
         printf("[BENCHMARK] avg_sequence_latency(ms) %.2f\n", mAvgSeqLatency);
+        printf("[BENCHMARK] output_token_throughput(token/sec) %.2f\n", mOutputTokenThroughput);
         printf("[BENCHMARK] token_throughput(token/sec) %.2f\n", mTokenThroughput);
     }
 
@@ -258,6 +262,7 @@ private:
     float mSeqThroughput;
     float mAvgSeqLatency;
     float mTokenThroughput;
+    float mOutputTokenThroughput;
 }; // class Recorder
 
 class GptServer
